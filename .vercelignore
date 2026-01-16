@@ -1,0 +1,12 @@
+# Ignore the backend source to prevent Vercel creating many serverless functions
+api/**
+api/**/*
+
+# Node build artifacts
+dist/
+node_modules/
+.env
+
+# Local files
+.vscode/
+.DS_Store
