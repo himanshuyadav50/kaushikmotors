@@ -4,13 +4,13 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import mongoose from 'mongoose';
-import { connectDB } from './config/database';
-import vehicleRoutes from './routes/vehicles';
-import enquiryRoutes from './routes/enquiries';
-import testimonialRoutes from './routes/testimonials';
-import settingsRoutes from './routes/settings';
-import adminRoutes from './routes/admin';
-import { errorHandler } from './middleware/errorHandler';
+import { connectDB } from './config/database.js';
+import vehicleRoutes from './routes/vehicles.js';
+import enquiryRoutes from './routes/enquiries.js';
+import testimonialRoutes from './routes/testimonials.js';
+import settingsRoutes from './routes/settings.js';
+import adminRoutes from './routes/admin.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 // Load environment variables FIRST - specify path explicitly
 import { fileURLToPath } from 'url';
@@ -104,9 +104,24 @@ const startServer = async () => {
 };
 
 // Start server only if not running on Vercel
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   startServer();
 }
 
-export default app;
+// For Vercel serverless deployment, wrap the app to ensure DB connection
+const handler = async (req: any, res: any) => {
+  // Ensure database is connected (mongoose will reuse existing connection)
+  if (mongoose.connection.readyState === 0) {
+    try {
+      await connectDB();
+    } catch (error) {
+      console.error('Database connection failed:', error);
+      return res.status(500).json({ error: 'Database connection failed' });
+    }
+  }
+
+  return app(req, res);
+};
+
+export default handler;
 
